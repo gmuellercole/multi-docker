@@ -1,0 +1,32 @@
+sudo: required
+services:
+  - docker
+
+# the dev flavor of the docker file is the only one that has tests enabled.
+# we want to run the client tests, so we need to specify the Dockerfile.dev
+before_install:
+  - docker build -t gmuellercole/react-test -f ./client/Dockerfile.dev ./client
+
+# any script that exits with a nonzero value will terminate travis execution\
+script:
+  # 'docker run gmuellercole/react-test' tells travis to run the docker command
+  # rather than execute the default image command we want to run 'npm test'
+  # by default the tests will leave in a interactive state, tell the tests
+  # to exit after run by passing '-- --coverage'
+  - docker run gmuellercole/react-test npm test -- --coverage
+
+# upon successful script execution, we will build the production flavors of
+# all the images and push them to docker hub
+after_success:
+  - docker build -t gmuellercole/multi-client ./client
+  - docker build -t gmuellercole/multi-nginx ./nginx
+  - docker build -t gmuellercole/multi-server ./server
+  - docker build -t gmuellercole/multi-worker ./worker
+  # Log in to the docker CLI using encrypted variables
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push the generated images to docker hub
+  - docker push gmuellercole/multi-client
+  - docker push gmuellercole/multi-nginx
+  - docker push gmuellercole/multi-server
+  - docker push gmuellercole/multi-worker
+
