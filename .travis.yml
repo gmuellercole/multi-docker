@@ -30,3 +30,23 @@ after_success:
   - docker push gmuellercole/multi-server
   - docker push gmuellercole/multi-worker
 
+deploy:
+  provider: elasticbeanstalk
+  # get region from subdomain of the Beanstalk
+  region: us-west-2
+  # get app and env from the Beanstalk
+  app: multi-docker
+  env: MultiDocker-env
+  # bucket_name is where travis will emit the images to, get value of
+  # s3 bucket for the region
+  bucket_name: elasticbeanstalk-us-west-2-488851141018
+  # path is a folder within the bucket to upload to
+  bucket_path: docker-multi
+  # we only monitor changes on the master branch (ignore feature branches)
+  on:
+    branch: master
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key:
+    secure: $AWS_SECRET_KEY
+
+
